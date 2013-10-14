@@ -8,8 +8,17 @@ import socket
 import time
 
 #--------------------------------------------------------------------------------
-# Status page
+# Error and message handling
 #--------------------------------------------------------------------------------
+class Handling(Resource):
+    def _delayedRender(self, message, request):
+        request.write('<html><body><pre>'+ message + '</pre></body></html>', )
+        request.finish()
+                
+    def _errorRender(self, error, request):
+        request.write('<html><body>' + str(error) + '</body></html>')
+        request.finish()
+
 class StatusPage(Resource):                
     def render_GET(self, request):
         streamerStatus = {}
@@ -22,6 +31,41 @@ class StatusPage(Resource):
         request.finish()
         return NOT_DONE_YET
 
+class Root(Resource):
+    def render_GET(self, request):
+        request.setResponseCode(404)
+        request.write('<html><h1>404 not found</h1></html>')
+        request.finish()
+        return NOT_DONE_YET
+
+class ChannelPage(Handling):
+    def __init__(self,ip):
+        Resource.__init__(self)
+        self.ip = ip
+                
+    def render_GET(self, request):
+        d = utils.getProcessOutput('cat /var/run/mumudvb/channels_* | grep ' + self.ip)
+        print "%s" % 'cat /var/run/mumudvb/channels_* | grep ' + self.ip
+        #d = self.Resource.getW()
+        d.addCallback(self._delayedRender, request)
+        d.addErrback(self._errorRender, request)
+        return NOT_DONE_YET
+        
+class Channel(Resource):
+    def getChild(self, name, request):
+        return ChannelPage(str(name))
+        
+    def render_POST(self, request):
+        return 'post'
+        
+    def render_GET(self, request):
+        request.setResponseCode(404)
+        request.write('<html><h1>404 not found</h1></html>')
+        request.finish()
+        return NOT_DONE_YET
+        
+
+ 
 class StatusPage2(Resource):
     def __init__(self, year):
         Resource.__init__(self)
