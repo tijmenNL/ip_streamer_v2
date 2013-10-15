@@ -1,4 +1,4 @@
-from twisted.internet import defer, utils
+from twisted.internet import defer, utils, fdesc 
 from twisted.internet.task import deferLater
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
@@ -6,7 +6,6 @@ import config
 import json
 import socket
 import time
-
 #--------------------------------------------------------------------------------
 # Error and message handling
 #--------------------------------------------------------------------------------
@@ -44,11 +43,11 @@ class ChannelPage(Handling):
         self.ip = ip
                 
     def render_GET(self, request):
-        d = utils.getProcessOutput('cat /var/run/mumudvb/channels_* | grep ' + self.ip)
+        #d = fdesc.readFromFD('var/run/mumudvb/channels_*',self._delayedRender)
         print "%s" % 'cat /var/run/mumudvb/channels_* | grep ' + self.ip
         #d = self.Resource.getW()
-        d.addCallback(self._delayedRender, request)
-        d.addErrback(self._errorRender, request)
+        #d.addCallback(self._delayedRender, request)
+        #d.addErrback(self._errorRender, request)
         return NOT_DONE_YET
         
 class Channel(Resource):
@@ -63,21 +62,11 @@ class Channel(Resource):
         request.write('<html><h1>404 not found</h1></html>')
         request.finish()
         return NOT_DONE_YET
-        
-
  
-class StatusPage2(Resource):
+class StatusPage2(Handling):
     def __init__(self, year):
         Resource.__init__(self)
         self.year = year
-
-    def _delayedRender(self, message, request):
-        request.write('<html><body><pre>'+ message + '</pre></body></html>', )
-        request.finish()
-                
-    def _errorRender(self, error, request):
-        request.write('<html><body>Internal server error</body></html>')
-        request.finish()
                 
     def render_GET(self, request):
         d = utils.getProcessOutput('w')

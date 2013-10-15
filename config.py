@@ -11,9 +11,4 @@ startTime = time.time()
 version = '0.01'
 role_type = 'ip_streamer'
 port = 8765
-
-#--------------------------------------------------------------------------------
-# Calculate uptime
-#--------------------------------------------------------------------------------
-def getUptime():
-    return time.time() - startTime
+debug = True
