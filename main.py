@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+
 from twisted.internet import reactor, task, defer, utils, threads 
 from twisted.internet.task import deferLater
 from twisted.python import log, logfile
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
+import argparse
 import ConfigParser
 import cyclone.httpclient
 import json
@@ -25,7 +28,15 @@ startTime = time.time()
 version = '0.01'
 role_type = 'ip_streamer'
 port = 8765
-debug = True
+
+#--------------------------------------------------------------------------------
+# Command line options
+#--------------------------------------------------------------------------------
+parser = argparse.ArgumentParser(description='VICE ip streamer to control mumudvb.')
+parser.add_argument('-d', '--debug', help='Run in debug mode', action='store_true', default=False, dest='debug')
+
+args = parser.parse_args()
+debug = args.debug
 
 #--------------------------------------------------------------------------------
 # Log handler
@@ -33,9 +44,9 @@ debug = True
 if (debug):
     log.startLogging(sys.stdout)
 else:
-    logFile = logfile.LogFile("test.log", "/tmp")
+    logFile = logfile.LogFile("ip_streamer.log", "/tmp")
     log.startLogging(logFile)
-
+	
 #-------------------------------------------------------------------------------
 # Help information on flags
 #-------------------------------------------------------------------------------
