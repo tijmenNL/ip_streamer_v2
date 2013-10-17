@@ -164,9 +164,15 @@ class configPage(Handling):
     def render_POST(self, request):        
         jsonConfig = json.loads(request.content.getvalue())        
         mumudvbConfig = ConfigParser.SafeConfigParser()
+        # Check the type, dvb-c = freq/1,000, dvb-s(2) = freq/1,000,000
         type = jsonConfig[0]['_']['type'] 
         if (type == 'DVB-C'):
             jsonConfig[0]['_']['freq'] =  int(jsonConfig[0]['_']['freq'])/1000
+        else:
+            jsonConfig[0]['_']['freq'] =  int(jsonConfig[0]['_']['freq'])/1000000
+        # The DVB-S2 type need an additional delivry system option
+        if (type == 'DVB-S2'):
+            jsonConfig[0]['_']['delivery_system'] = type
         jsonConfig[0]['_']['srate'] = int(jsonConfig[0]['_']['srate'])/1000
         for index in sorted(jsonConfig[0], reverse=True):                
             mumudvbConfig.add_section(index)
