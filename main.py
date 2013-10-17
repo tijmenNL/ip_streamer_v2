@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from twisted.internet import reactor, task, defer, utils, threads 
+from twisted.internet import reactor, task, defer, utils, threads, defer, protocol
 from twisted.internet.task import deferLater
 from twisted.python import log, logfile
 from twisted.web.resource import Resource
@@ -24,9 +24,22 @@ startTime = time.time()
 #--------------------------------------------------------------------------------
 # Program settings
 #--------------------------------------------------------------------------------
-version = '0.01'
+version = '0.1'
 role_type = 'ip_streamer'
 port = 8765
+mumudvbVersion = 0
+
+class getMumudvbVersion(protocol.ProcessProtocol):
+    def errReceived(self, data):
+        #print "errReceived! with %s" % (data)
+        global mumudvbVersion
+        mumudvbVersion = re.findall('Version.*',data)[0][8:]
+    def processEnded(self, reason):
+        reactor.callLater(0, postStatus)
+mumu = getMumudvbVersion()
+cmd = ["mumudvb", "--help"]
+reactor.spawnProcess(mumu, cmd[0], cmd, env=None, childFDs={0:"w", 1:"r", 2:"r", 3:"w"})
+
 
 #--------------------------------------------------------------------------------
 # Command line options
@@ -83,9 +96,9 @@ def getStatus():
         streamerStatus['ip'] = socket.gethostbyname(socket.gethostname())
         streamerStatus['role_type'] = role_type
         streamerStatus['port'] = port
-        streamerStatus['mumudvb_version'] = 0
+        streamerStatus['mumudvb_version'] = mumudvbVersion
         return json.dumps(streamerStatus)
-    
+
 #--------------------------------------------------------------------------------
 # Daemon thread to monitor mumudvb
 #--------------------------------------------------------------------------------
@@ -164,23 +177,25 @@ class configPage(Handling):
     def render_POST(self, request):        
         jsonConfig = json.loads(request.content.getvalue())        
         mumudvbConfig = ConfigParser.SafeConfigParser()
-        # Check the type, dvb-c = freq/1,000, dvb-s(2) = freq/1,000,000
-        type = jsonConfig[0]['_']['type'] 
-        if (type == 'DVB-C'):
-            jsonConfig[0]['_']['freq'] =  int(jsonConfig[0]['_']['freq'])/1000
-        else:
-            jsonConfig[0]['_']['freq'] =  int(jsonConfig[0]['_']['freq'])/1000000
-        # The DVB-S2 type need an additional delivry system option
-        if (type == 'DVB-S2'):
-            jsonConfig[0]['_']['delivery_system'] = type
-        jsonConfig[0]['_']['srate'] = int(jsonConfig[0]['_']['srate'])/1000
-        for index in sorted(jsonConfig[0], reverse=True):                
-            mumudvbConfig.add_section(index)
-            for key in jsonConfig[0][index]:
-                if (jsonConfig[0][index][key] != None and key != 'type'):
-                        mumudvbConfig.set(index,str(key),str(jsonConfig[0][index][key]))
-        with open('mumu.ini', 'wb') as configfile:   
-            mumudvbConfig.write(configfile)
+        for cardConfig in jsonConfig:
+            card = cardConfig['_']['card']
+            # Check the type, dvb-c = freq/1,000, dvb-s(2) = freq/1,000,000
+            type = cardConfig['_']['type'] 
+            if (type == 'DVB-C'):
+                cardConfig['_']['freq'] =  int(cardConfig['_']['freq'])/1000
+            else:
+                cardConfig['_']['freq'] =  int(cardConfig['_']['freq'])/1000000
+            # The DVB-S2 type need an additional delivery system option
+            if (type == 'DVB-S2'):
+                cardConfig['_']['delivery_system'] = type
+            cardConfig['_']['srate'] = int(cardConfig['_']['srate'])/1000
+            for section in sorted(cardConfig, reverse=True):                
+                mumudvbConfig.add_section(section)
+                for key in cardConfig[section]:
+                    if (cardConfig[section][key] != None and key != 'type'):
+                            mumudvbConfig.set(section,str(key),str(cardConfig[section][key]))
+            with open('mumu' + card + '.ini', 'wb') as configfile:   
+                mumudvbConfig.write(configfile)
         return ''
 
 #--------------------------------------------------------------------------------
@@ -220,7 +235,6 @@ factory = Site(root)
 mumudvbThread = task.LoopingCall(mumudvbThread,"MuMuDVB thread")
 reactor.listenTCP(port, factory)
 mumudvbThread.start(10)
-reactor.callLater(0, postStatus)
 reactor.run()
 
 
