@@ -14,7 +14,6 @@ import re
 import socket
 import sys
 import time
-import urllib2
 import warnings
 
 #--------------------------------------------------------------------------------
@@ -46,27 +45,27 @@ if (debug):
 else:
     logFile = logfile.LogFile("ip_streamer.log", "/tmp")
     log.startLogging(logFile)
-	
+    
 #-------------------------------------------------------------------------------
 # Help information on flags
 #-------------------------------------------------------------------------------
 # something with wargs
-	
+    
 #--------------------------------------------------------------------------------
 # Read config, exit if no config is found
 #--------------------------------------------------------------------------------
 config = ConfigParser.ConfigParser()
 if(os.path.isfile('/etc/vice/config.ini')):
-	config.read('/etc/vice/config.ini')
-	viceIp = config.get('settings','server')
-	vicePort = config.get('settings','port')
-	viceServer = 'http://' + viceIp + ':' + vicePort
-	updatetime = config.get('settings_mumudude','updatetime')
-	tmpdir = config.get('settings_mumudude','tmpdir')
-	mumudvblogdir = config.get('settings_mumudude','mumudvblogdir')
-	mumudvbbindir = config.get('settings_mumudude','mumudvbbindir')	
+    config.read('/etc/vice/config.ini')
+    viceIp = config.get('settings','server')
+    vicePort = config.get('settings','port')
+    viceServer = 'http://' + viceIp + ':' + vicePort
+    updatetime = config.get('settings_mumudude','updatetime')
+    tmpdir = config.get('settings_mumudude','tmpdir')
+    mumudvblogdir = config.get('settings_mumudude','mumudvblogdir')
+    mumudvbbindir = config.get('settings_mumudude','mumudvbbindir')    
 else:
-	sys.exit('No config file found, please install /etc/vice/config.ini')
+    sys.exit('No config file found, please install /etc/vice/config.ini')
 
 #--------------------------------------------------------------------------------
 # Calculate uptime
@@ -76,7 +75,7 @@ def getUptime():
 
 #--------------------------------------------------------------------------------
 # Return the current streamer status in JSON format
-#--------------------------------------------------------------------------------	
+#--------------------------------------------------------------------------------    
 def getStatus():
         streamerStatus = {}
         streamerStatus['version'] =  version
@@ -86,7 +85,7 @@ def getStatus():
         streamerStatus['port'] = port
         streamerStatus['mumudvb_version'] = 0
         return json.dumps(streamerStatus)
-	
+    
 #--------------------------------------------------------------------------------
 # Daemon thread to monitor mumudvb
 #--------------------------------------------------------------------------------
@@ -104,30 +103,30 @@ class Handling(Resource):
     def _errorRender(self, error, request):
         request.write('<html><body>' + str(error) + '</body></html>')
         request.finish()
-		
+        
 #--------------------------------------------------------------------------------
 # Analyze post response
 #--------------------------------------------------------------------------------
 def postResponse(self,successMsg,failMsg, die):
-	if (self.code != 200):
-		log.msg(failMsg)
-		log.msg(str(self.code) + ' ' + self.phrase)
-		s = re.findall('<title>.*</title>',self.body)[0]
-		log.msg(s[7:s.rfind("</title>")])
-		if(die):
-			log.msg('Invalid response from VICE, missing key information. Will now stop!')
-			reactor.stop()			
-	else:
-		log.msg(successMsg)
-		
+    if (self.code != 200):
+        log.msg(failMsg)
+        log.msg(str(self.code) + ' ' + self.phrase)
+        s = re.findall('<title>.*</title>',self.body)[0]
+        log.msg(s[7:s.rfind("</title>")])
+        if(die):
+            log.msg('Invalid response from VICE, missing key information. Will now stop!')
+            reactor.stop()            
+    else:
+        log.msg(successMsg)
+        
 #--------------------------------------------------------------------------------
 # Post status to vice server
 #--------------------------------------------------------------------------------
 def postStatus():
-		d = cyclone.httpclient.fetch(viceServer + '/frontend_test.php/role_status',postdata=getStatus(), headers={"Content-Type": ["application/json"]})
-		d.addCallback(postResponse,'Posted status to VICE server','Posting to VICE server failed!', False)		
-		#post(viceServer + '/frontend_test.php/role_status',getStatus())
-		
+        d = cyclone.httpclient.fetch(viceServer + '/frontend_test.php/role_status',postdata=getStatus(), headers={"Content-Type": ["application/json"]})
+        d.addCallback(postResponse,'Posted status to VICE server','Posting to VICE server failed!', False)        
+        #post(viceServer + '/frontend_test.php/role_status',getStatus())
+        
 #--------------------------------------------------------------------------------
 # Main page
 #--------------------------------------------------------------------------------
@@ -157,7 +156,27 @@ class channelPage(Handling):
         d.addCallback(self._delayedRender, request)
         d.addErrback(self._errorRender, request)
         return NOT_DONE_YET
-        
+
+#--------------------------------------------------------------------------------
+# Config page
+#--------------------------------------------------------------------------------      
+class configPage(Handling):
+    def render_POST(self, request):        
+        jsonConfig = json.loads(request.content.getvalue())        
+        mumudvbConfig = ConfigParser.SafeConfigParser()
+        type = jsonConfig[0]['_']['type'] 
+        if (type == 'DVB-C'):
+            jsonConfig[0]['_']['freq'] =  int(jsonConfig[0]['_']['freq'])/1000
+        jsonConfig[0]['_']['srate'] = int(jsonConfig[0]['_']['srate'])/1000
+        for index in sorted(jsonConfig[0], reverse=True):                
+            mumudvbConfig.add_section(index)
+            for key in jsonConfig[0][index]:
+                if (jsonConfig[0][index][key] != None and key != 'type'):
+                        mumudvbConfig.set(index,str(key),str(jsonConfig[0][index][key]))
+        with open('mumu.ini', 'wb') as configfile:   
+            mumudvbConfig.write(configfile)
+        return ''
+
 #--------------------------------------------------------------------------------
 # Streamer status page
 #--------------------------------------------------------------------------------
@@ -189,6 +208,7 @@ class channel(Resource):
 root = base()
 root.putChild('status', statusPage())
 root.putChild('channel', channel())
+root.putChild('config', configPage())
 root.putChild('', base())
 factory = Site(root)
 mumudvbThread = task.LoopingCall(mumudvbThread,"MuMuDVB thread")
