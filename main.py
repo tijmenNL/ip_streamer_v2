@@ -46,7 +46,6 @@ reactor.spawnProcess(mumu, cmd[0], cmd, env=None, childFDs={0:"w", 1:"r", 2:"r",
 #--------------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description='VICE ip streamer to control mumudvb.')
 parser.add_argument('-d', '--debug', help='Run in debug mode', action='store_true', default=False, dest='debug')
-
 args = parser.parse_args()
 debug = args.debug
 
@@ -59,11 +58,6 @@ else:
     logFile = logfile.LogFile("ip_streamer.log", "/tmp")
     log.startLogging(logFile)
     
-#-------------------------------------------------------------------------------
-# Help information on flags
-#-------------------------------------------------------------------------------
-# something with wargs
-    
 #--------------------------------------------------------------------------------
 # Read config, exit if no config is found
 #--------------------------------------------------------------------------------
@@ -75,8 +69,14 @@ if(os.path.isfile('/etc/vice/config.ini')):
     viceServer = 'http://' + viceIp + ':' + vicePort
     updatetime = config.get('settings_mumudude','updatetime')
     tmpdir = config.get('settings_mumudude','tmpdir')
+    if not os.path.exists(tmpdir):
+        os.makedirs(tmpdir)
     mumudvblogdir = config.get('settings_mumudude','mumudvblogdir')
+    if not os.path.exists(mumudvblogdir):
+        os.makedirs(mumudvblogdir)
     mumudvbbindir = config.get('settings_mumudude','mumudvbbindir')    
+    if not os.path.exists(mumudvbbindir):
+        os.makedirs(mumudvbbindir)
 else:
     sys.exit('No config file found, please install /etc/vice/config.ini')
 
@@ -194,7 +194,7 @@ class configPage(Handling):
                 for key in cardConfig[section]:
                     if (cardConfig[section][key] != None and key != 'type'):
                             mumudvbConfig.set(section,str(key),str(cardConfig[section][key]))
-            with open('mumu' + card + '.ini', 'wb') as configfile:   
+            with open(tmpdir+'/dvbrc_adapter' + card + '.conf', 'wb') as configfile:   
                 mumudvbConfig.write(configfile)
         return ''
 
