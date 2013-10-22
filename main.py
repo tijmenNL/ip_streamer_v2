@@ -84,7 +84,6 @@ debug = args.debug
 #--------------------------------------------------------------------------------
 if (debug):
     log.startLogging(sys.stdout)
-    app.debug = True
 else:
     logFile = logfile.LogFile("ip_streamer.log", "/tmp")
     log.startLogging(logFile)
@@ -206,7 +205,7 @@ def root():
 def handle_channel(address):
     if request.method == 'POST':
         return 'Done'
-    else      
+    else:
         log.msg('Got status request for %s' % address)
         global channelStatus
         try:
