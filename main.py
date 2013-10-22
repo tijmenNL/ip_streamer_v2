@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from autobahn.resource import WebSocketResource, WSGIRootResource
-from flask import Flask
+from flask import abort, Flask, request
 from twisted.internet import reactor, task, defer, utils, threads, defer, protocol
 from twisted.internet.task import deferLater
 from twisted.python import log, logfile
@@ -84,6 +84,7 @@ debug = args.debug
 #--------------------------------------------------------------------------------
 if (debug):
     log.startLogging(sys.stdout)
+    app.debug = True
 else:
     logFile = logfile.LogFile("ip_streamer.log", "/tmp")
     log.startLogging(logFile)
@@ -190,40 +191,38 @@ def postStatus():
         d = cyclone.httpclient.fetch(viceServer + '/frontend_test.php/role_status',postdata=getStatus(), headers={"Content-Type": ["application/json"]})
         d.addCallback(postResponse,'Posted status to VICE server','Posting to VICE server failed!', False)        
         #post(viceServer + '/frontend_test.php/role_status',getStatus())
-        
+       
 #--------------------------------------------------------------------------------
-# Main page
+# Main page (/)
 #--------------------------------------------------------------------------------
-class base(Resource):
-    def render_GET(self, request):
-        request.setResponseCode(404)
-        request.write('<html><body><h1>404 not found</h1></body></html>')
-        request.finish()
-        return NOT_DONE_YET
-
+@app.route('/')
+def root():
+    abort(404)       
+    
 #--------------------------------------------------------------------------------
-# Channel status page
-#--------------------------------------------------------------------------------      
-class channelPage(Handling):
-    def __init__(self,address):
-        Resource.__init__(self)
-        self.address = address
-        
-    def render_GET(self, request):
-        log.msg(self.address)
+# Channel page (/channel) post or get with child info
+#--------------------------------------------------------------------------------     
+@app.route('/channel/<address>', methods=['GET','POST'])
+def handle_channel(address):
+    if request.method == 'POST':
+        return 'Done'
+    else      
+        log.msg('Got status request for %s' % address)
+        global channelStatus
         try:
-            request.write('<html><body>' + str(channelStatus[self.address]) + '</body></html>')
+            return str(channelStatus[address])
         except KeyError:
-            request.write('<html><body><h1>404 Not Found</h1></body></html>')
-        request.finish()
-        return NOT_DONE_YET
-
+            log.msg('Got channel status request for unknown address %s' % address)
+            abort(404)
+    
 #--------------------------------------------------------------------------------
-# Config page
-#--------------------------------------------------------------------------------      
-class configPage(Handling):
-    def render_POST(self, request):        
-        jsonConfig = json.loads(request.content.getvalue())        
+# Config page (/config)
+#--------------------------------------------------------------------------------          
+@app.route('/config', methods=['POST'])
+def handle_config():
+    if request.method == 'POST':    
+        log.msg('Received JSON post with config')     
+        jsonConfig = request.get_json(True)
         mumudvbConfig = ConfigParser.SafeConfigParser()
         for cardConfig in jsonConfig:
             card = cardConfig['_']['card']
@@ -253,49 +252,19 @@ class configPage(Handling):
                 log.msg('Starting MuMuDVB with the following flags: ' + str(cmd) + ' on card ' + card)
                 process = reactor.spawnProcess(mumu, cmd[0], cmd, usePTY=True, env=None)
                 log.msg(process)
-        return ''
-
+    return ''
+    
 #--------------------------------------------------------------------------------
-# Streamer status page
+# Streamer status page (/status)
 #--------------------------------------------------------------------------------
-class statusPage(Handling):                
-    def render_GET(self, request):        
-        request.write(getStatus())
-        request.finish()
-        return NOT_DONE_YET
-        
-#--------------------------------------------------------------------------------
-# Channel page, post or get with child info
-#--------------------------------------------------------------------------------     
-class channel(Handling):
-    def getChild(self, name, request):
-        log.msg(request)
-        if name == '':
-            return self        
-        return channelPage(str(name))
-        
-    def render_POST(self, request):
-        return 'post'
-        
-    def render_GET(self, request):
-        request.setResponseCode(404)
-        request.write('<html><h1>404 not found</h1></html>')
-        request.finish()
-        return NOT_DONE_YET
-        
-@app.route("/hello")
-def hello():
-    return "Hello World!"   
+@app.route('/status', methods=['GET'])
+def handle_status():
+    return getStatus()
     
 #--------------------------------------------------------------------------------
 # Main webserver thread
 #--------------------------------------------------------------------------------
-def main():
-    root = base()
-    root.putChild('status', statusPage())
-    root.putChild('channel', channel())
-    root.putChild('config', configPage())
-    
+def main():    
     # create thread pool used to serve WSGI requests
     thread_pool = ThreadPool()
     thread_pool.start()
