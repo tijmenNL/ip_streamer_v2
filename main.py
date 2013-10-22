@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+from autobahn.resource import WebSocketResource, WSGIRootResource
+from flask import Flask
 from twisted.internet import reactor, task, defer, utils, threads, defer, protocol
 from twisted.internet.task import deferLater
 from twisted.python import log, logfile
 from twisted.python.filepath import FilePath
+from twisted.python.threadpool import ThreadPool
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
+from twisted.web.wsgi import WSGIResource
 import argparse
 import ConfigParser
 import cyclone.httpclient
@@ -22,6 +26,7 @@ import warnings
 startTime = time.time()
 channelStatus = {}
 subProcesses = {}
+app = Flask(__name__)
 
 #--------------------------------------------------------------------------------
 # Program settings
@@ -277,6 +282,10 @@ class channel(Handling):
         request.write('<html><h1>404 not found</h1></html>')
         request.finish()
         return NOT_DONE_YET
+        
+@app.route("/hello")
+def hello():
+    return "Hello World!"   
     
 #--------------------------------------------------------------------------------
 # Main webserver thread
@@ -286,11 +295,22 @@ def main():
     root.putChild('status', statusPage())
     root.putChild('channel', channel())
     root.putChild('config', configPage())
-    root.putChild('', base())
-    factory = Site(root)
+    
+    # create thread pool used to serve WSGI requests
+    thread_pool = ThreadPool()
+    thread_pool.start()
+    reactor.addSystemEventTrigger('before', 'shutdown', thread_pool.stop)
+    
+    # create a Twisted Web WSGI resource for our Flask server
+    wsgi_resource = WSGIResource(reactor, thread_pool, app)
+    root_resource = WSGIRootResource(wsgi_resource, {})
+    factory = Site(root_resource)
+    
+    # mumudvb status thread
     statusThread = task.LoopingCall(mumudvbThread,"MuMuDVB thread")
-    reactor.listenTCP(port, factory)
     statusThread.start(10, False)
+    
+    reactor.listenTCP(port, factory)
     reactor.run()
     
 if __name__ == '__main__':
