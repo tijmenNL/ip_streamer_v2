@@ -39,12 +39,12 @@ class OP2Daemon(object):
         handler(notification)
 
     def _NH_SIPApplicationDidStart(self, notification):
-        log.msg('SIP application started')
+        log.msg('IP streamer application started')
         self.web_handler.start()
 
     def _NH_SIPApplicationWillEnd(self, notification):
         self.web_handler.stop()
 
     def _NH_SIPApplicationDidEnd(self, notification):
-        log.msg('SIP application ended')
+        log.msg('IP Streamer application ended')
         self.stop_event.set()
