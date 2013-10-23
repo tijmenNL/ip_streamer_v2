@@ -1,7 +1,7 @@
 from application.configuration import ConfigSection, ConfigSetting
 
 from ipstreamer import cfg_filename
-import os
+import os,os.path
 
 class Port(int):
     def __new__(cls, value):
