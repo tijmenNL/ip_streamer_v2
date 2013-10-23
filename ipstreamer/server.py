@@ -7,6 +7,7 @@ from zope.interface import implements
 
 from ipstreamer.configuration import GeneralConfiguration,MumuConfiguration
 from ipstreamer.web import WebHandler
+from ipstreamer.mumu import mumuApplication
 
 __all__ = ['IPStreamer']
 
@@ -16,7 +17,7 @@ class IPStreamerDaemon(object):
     implements(IObserver)
 
     def __init__(self):
-        #self.application = Application()
+        self.application = mumuApplication()
         self.stopping = False
         self.stop_event = Event()
 
