@@ -1,7 +1,8 @@
 from application.configuration import ConfigSection, ConfigSetting
 
 from ipstreamer import cfg_filename
-import os,os.path
+import os
+import os.path
 
 class Port(int):
     def __new__(cls, value):
@@ -27,10 +28,10 @@ class MumuConfiguration(ConfigSection):
     mumudvblogdir = ConfigSetting(type=str, value=None)
     mumudvbbindir = ConfigSetting(type=str, value=None)
 
-    if not os.isdir(tmpdir):
+    if not os.path.isdir(tmpdir):
         os.mkdirs(tmpdir)
 
-    if not os.isdir(mumudvblogdir):
+    if not os.path.isdir(mumudvblogdir):
         os.mkdirs(mumudvblogdir)
 
 
