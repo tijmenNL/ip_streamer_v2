@@ -5,6 +5,8 @@ from application.python.types import Singleton
 from threading import Event
 from zope.interface import implements
 
+from twisted.internet import reactor, task, defer, utils, threads, defer, protocol
+
 from ipstreamer.configuration import GeneralConfiguration,MumuConfiguration
 from ipstreamer.web import WebHandler
 from ipstreamer.mumu import MumuApplication
@@ -27,6 +29,7 @@ class IPStreamerDaemon(object):
         notification_center = NotificationCenter()
         notification_center.add_observer(self)
         notification_center.add_observer(self, sender=self.application)
+        reactor.run();
         self.application.start()
 
     def stop(self):
