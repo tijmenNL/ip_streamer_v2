@@ -5,7 +5,7 @@ from application import log
 from flask import Flask, request
 from werkzeug.routing import BaseConverter
 
-import op2d
+import ipstreamer
 
 from ipstreamer.web.api.utils import error_response, get_state, get_json, jsonify, set_state
 
