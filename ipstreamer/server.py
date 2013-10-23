@@ -7,7 +7,7 @@ from zope.interface import implements
 
 from ipstreamer.configuration import GeneralConfiguration,MumuConfiguration
 from ipstreamer.web import WebHandler
-from ipstreamer.mumu import mumuApplication
+from ipstreamer.mumu import MumuApplication
 
 __all__ = ['IPStreamer']
 
