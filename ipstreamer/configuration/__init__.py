@@ -18,7 +18,7 @@ class GeneralConfiguration(ConfigSection):
     server   = ConfigSetting(type=str, value=None)
     port = ConfigSetting(type=Port, value=8088)
     role_port = ConfigSetting(type=Port, value=8765)
-    vice_server = 'http://' + server + ':' + port
+    #vice_server = 'http://' + server + ':' + port
 
 
 class MumuConfiguration(ConfigSection):
