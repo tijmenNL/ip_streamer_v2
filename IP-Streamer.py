@@ -36,10 +36,7 @@ def main():
     ipstreamer.cfg_filename = process.config_file(cfg_file)
 
     # when run in foreground, do not require root access because of PID file in /var/run
-    if not args.fork:
-        #process._runtime_directory = None
-        #process.spool_directory = '.' + spool_directory
-    else:
+    if args.fork:
         try:
             process.runtime_directory = runtime_directory
             process.daemonize(args.pid_file)
