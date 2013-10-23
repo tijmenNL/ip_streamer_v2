@@ -2,7 +2,7 @@ from application import log
 from application.python.types import Singleton
 from twisted.internet import reactor
 
-from ipstreamer.configuration import Configuration
+from ipstreamer.configuration import GeneralConfiguration
 from ipstreamer.web.site import get_site
 
 
