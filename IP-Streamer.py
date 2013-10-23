@@ -38,7 +38,7 @@ def main():
     # when run in foreground, do not require root access because of PID file in /var/run
     if not args.fork:
         #process._runtime_directory = None
-        process.spool_directory = '.' + spool_directory
+        #process.spool_directory = '.' + spool_directory
     else:
         try:
             process.runtime_directory = runtime_directory
