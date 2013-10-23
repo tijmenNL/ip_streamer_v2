@@ -1,8 +1,15 @@
 from application.configuration import ConfigSection, ConfigSetting
-from sipsimple.configuration.datatypes import Port
 
 from ipstreamer import cfg_filename
 import os
+
+class Port(int):
+    def __new__(cls, value):
+        value = int(value)
+        if not (0 <= value <= 65535):
+            raise ValueError("illegal port value: %s" % value)
+        return value
+
 
 class GeneralConfiguration(ConfigSection):
     __cfgfile__ = cfg_filename

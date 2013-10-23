@@ -51,7 +51,8 @@ def main():
     if ipstreamer.cfg_filename:
         log.msg("Starting %s %s, config=%s" % (fullname, version, ipstreamer.cfg_filename))
     else:
-        log.msg("Starting %s %s, with no configuration file" % (fullname, version))
+        log.fatal("Starting %s %s, with no configuration file" % (fullname, version))
+        sys.exit(1)
 
     try:
         from ipstreamer.server import IPStreamerDaemon
