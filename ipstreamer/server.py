@@ -17,7 +17,7 @@ class IPStreamerDaemon(object):
     implements(IObserver)
 
     def __init__(self):
-        self.application = mumuApplication()
+        self.application = MumuApplication()
         self.stopping = False
         self.stop_event = Event()
 
