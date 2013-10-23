@@ -5,8 +5,6 @@ try:
 except ImportError:
     from flask.helpers import jsonify
 
-from sipsimple.configuration import DefaultValue
-
 __all__ = ['error_response', 'get_json', 'get_state', 'jsonify', 'set_state']
 
 
