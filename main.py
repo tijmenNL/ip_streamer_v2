@@ -207,7 +207,6 @@ def handle_channel(address):
         return 'Done'
     else:
         log.msg('Got status request for %s' % address)
-        global channelStatus
         try:
             return str(channelStatus[address])
         except KeyError:
