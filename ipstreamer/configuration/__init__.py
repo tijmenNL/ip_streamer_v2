@@ -28,11 +28,11 @@ class MumuConfiguration(ConfigSection):
     mumudvblogdir = ConfigSetting(type=str, value=None)
     mumudvbbindir = ConfigSetting(type=str, value=None)
 
-    if not os.path.isdir(tmpdir):
-        os.mkdirs(tmpdir)
+#    if not os.path.isdir(tmpdir):
+#        os.mkdirs(tmpdir)
 
-    if not os.path.isdir(mumudvblogdir):
-        os.mkdirs(mumudvblogdir)
+#    if not os.path.isdir(mumudvblogdir):
+#        os.mkdirs(mumudvblogdir)
 
 
 
