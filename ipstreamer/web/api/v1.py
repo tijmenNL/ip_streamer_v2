@@ -26,7 +26,7 @@ def server_error(error):
 
 @app.route('/')
 def index():
-    message = 'OP2d version %s APIv1' % op2d.__version__
+    message = 'IP Streamer V2 version %s APIv1' % op2d.__version__
     return jsonify({'message': message})
 
 #--------------------------------------------------------------------------------

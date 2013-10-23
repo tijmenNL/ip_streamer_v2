@@ -11,7 +11,7 @@ from ipstreamer.web import WebHandler
 __all__ = ['IPStreamer']
 
 
-class OP2Daemon(object):
+class IPStreamerDaemon(object):
     __metaclass__ = Singleton
     implements(IObserver)
 
