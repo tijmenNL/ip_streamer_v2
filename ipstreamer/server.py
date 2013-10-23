@@ -27,7 +27,7 @@ class IPStreamerDaemon(object):
         notification_center = NotificationCenter()
         notification_center.add_observer(self)
         notification_center.add_observer(self, sender=self.application)
-        #self.application.start(FileStorage(ApplicationData.directory))
+        self.application.start()
 
     def stop(self):
         if self.stopping:
